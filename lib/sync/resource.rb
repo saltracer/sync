@@ -70,13 +70,37 @@ module Sync
     def name
       model.class.model_name.to_s.underscore
     end
-    
+
+    def ancestors
+      model_class = model.class
+      ancestor_array = [model_class]
+      while model_class != ActiveRecord::Base
+        superclass = model_class.superclass
+        break if superclass == ActiveRecord::Base
+        ancestor_array << superclass
+        model_class = model_class.superclass
+      end
+      ancestor_array
+    end
+
+    def names
+      ancestors.collect{|a| a.model_name.to_s.underscore; }
+    end
+
     def base_name
       name.split('/').last
     end
 
+    def base_names
+      names.collect{|n| n.split('/').last}
+    end
+
     def plural_name
       name.pluralize
+    end
+
+    def plural_names
+      names.collect(&:pluralize)
     end
 
     def scopes_path

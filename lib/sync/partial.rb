@@ -5,7 +5,13 @@ module Sync
     def self.all(model, context, scope = nil)
       resource = Resource.new(model, scope)
 
-      Dir["#{Sync.views_root}/#{resource.plural_name}/_*.*"].map do |partial|
+      plural_names = resource.plural_names
+
+      partials = plural_names.collect do |plural_name|
+        Dir["#{Sync.views_root}/#{plural_name}/_*.*"]
+      end.flatten.compact
+
+      partials.map do |partial|
         partial_name = File.basename(partial)
         Partial.new(partial_name[1...partial_name.index('.')], resource.model, scope, context)
       end
@@ -84,15 +90,15 @@ module Sync
     private
 
     def path
-      "sync/#{resource.plural_name}/#{name}"
+      "sync/#{plural_name}/#{name}"
     end
 
     def locals
       locals_hash = {}
-      locals_hash[resource.base_name.to_sym] = resource.model
+      locals_hash[plural_name.singularize.to_sym] = resource.model
       locals_hash
     end
-    
+
     def model_path
       resource.model_path
     end
@@ -100,5 +106,15 @@ module Sync
     def polymorphic_path
       resource.polymorphic_path
     end
+
+    def plural_name
+
+      partials = resource.plural_names.collect do |plural_name|
+        Dir["#{Sync.views_root}/#{plural_name}"]
+      end.flatten.compact
+
+      partials[0].split("/")[-1]
+    end
+
   end
 end
